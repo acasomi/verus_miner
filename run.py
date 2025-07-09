@@ -1,6 +1,7 @@
 import subprocess
 import time
 import os
+import sys
 
 def scan_wifi_windows():
     print("[*] Memindai jaringan WiFi...")
@@ -18,10 +19,15 @@ def pilih_wifi(ssids):
     print("\n=== Daftar WiFi Terdeteksi ===")
     for i, ssid in enumerate(ssids, 1):
         print(f"{i}. {ssid}")
+    print("0. Keluar")
+
     while True:
         try:
-            pilih = int(input("Pilih WiFi (nomor): ")) - 1
-            return ssids[pilih]
+            pilih = int(input("Pilih WiFi (nomor): "))
+            if pilih == 0:
+                print("[✓] Program dihentikan oleh user.")
+                sys.exit()
+            return ssids[pilih - 1]
         except:
             print("[!] Pilihan tidak valid.")
 
