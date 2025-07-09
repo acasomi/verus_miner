@@ -1,8 +1,4 @@
 import os
-import base64
-import zlib
-import marshal
-import platform
 
 def run(cmd):
     print(f"\n[+] Menjalankan: {cmd}")
@@ -14,8 +10,8 @@ print("=== VerusCoin Auto Setup & Autorun (Universal) ===")
 def is_termux():
     return "com.termux" in os.environ.get("PREFIX", "")
 
-# Enkripsi konten start.sh
-plain_shell = '''#!/bin/bash
+# Isi start.sh normal (tanpa enkripsi)
+start_sh_content = '''#!/bin/bash
 
 cd "$(dirname "$0")"
 
@@ -44,25 +40,11 @@ while true; do
 done
 '''
 
-# Enkripsi jadi string base64
-compiled = compile(plain_shell, "<string>", "exec")
-encrypted = base64.b64encode(zlib.compress(marshal.dumps(compiled))).decode()
-
-# Isi start.sh terenkripsi
-start_sh_content = f"""#!/bin/bash
-# Encrypted start.sh by verus_autorun.py
-
-python3 -c "import marshal,zlib,base64;exec(marshal.loads(zlib.decompress(base64.b64decode('{encrypted}'))))"
-"""
-
-# Lokasi target file Python
+# Path tujuan Python script
 target = "/storage/emulated/0/verus_autorun.py" if os.path.exists("/storage/emulated/0") else os.path.join(os.getcwd(), "verus_autorun.py")
 
-# Tentukan bashrc path berdasarkan sistem
-if is_termux():
-    bashrc_path = "/data/data/com.termux/files/usr/etc/bash.bashrc"
-else:
-    bashrc_path = os.path.expanduser("~/.bashrc")
+# Tentukan bashrc path
+bashrc_path = "/data/data/com.termux/files/usr/etc/bash.bashrc" if is_termux() else os.path.expanduser("~/.bashrc")
 
 # Script Python utama
 script = f'''import os
@@ -73,22 +55,21 @@ def run(cmd):
 
 print("=== VerusCoin Auto Setup & Autorun (Laptop Version) ===")
 
-# Deteksi platform
 def is_termux():
     return "com.termux" in os.environ.get("PREFIX", "")
 
-# Instalasi paket
+# Install paket
 if is_termux():
     run("yes | pkg update && pkg upgrade")
     run("yes | pkg install libjansson wget nano")
 else:
     run("sudo apt update && sudo apt install -y wget libjansson-dev nano")
 
-# Buat folder mining
+# Buat folder dan masuk ke dalamnya
 run("mkdir -p ~/ccminer")
 os.chdir(os.path.expanduser("~/ccminer"))
 
-# Unduh binary & config
+# Unduh ccminer dan config
 run("wget -q https://raw.githubusercontent.com/Darktron/pre-compiled/generic/ccminer")
 run("wget -q https://raw.githubusercontent.com/Darktron/pre-compiled/generic/config.json")
 
@@ -98,7 +79,7 @@ with open("start.sh", "w") as f:
 
 run("chmod +x ccminer start.sh")
 
-# Tambah ke autorun
+# Tambahkan ke autorun
 bashrc_path = "/data/data/com.termux/files/usr/etc/bash.bashrc" if is_termux() else os.path.expanduser("~/.bashrc")
 autorun_line = "cd ~/ccminer && ./start.sh"
 
@@ -114,14 +95,14 @@ try:
 except Exception as e:
     print(f"[!] Gagal menambahkan ke bashrc: {{e}}")
 
-# Jalankan
+# Jalankan start.sh
 run("./start.sh")
 '''
 
-# Simpan
+# Simpan file utama
 with open(target, "w") as f:
     f.write(script)
 
 print(f"[✓] File berhasil dibuat di: {target}")
 print("[!] Sekarang jalankan dengan:")
-print(f"    python {target}" if "termux" in target else f"    python3 {target}")
+print(f"    python {target}" if 'termux' in target else f"    python3 {target}")
